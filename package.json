@@ -1,0 +1,17 @@
+{
+  "name": "http-to-dns-via-dht",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "maboiteaspam",
+  "license": "WTFPL",
+  "dependencies": {
+    "commander": "^2.6.0",
+    "dns-via-dht": "0.0.1",
+    "dns-via-dht-config": "0.0.1",
+    "node-http-proxy": "0.0.3"
+  }
+}
