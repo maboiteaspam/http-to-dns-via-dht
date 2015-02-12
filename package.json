@@ -12,6 +12,7 @@
     "commander": "^2.6.0",
     "dns-via-dht": "0.0.1",
     "dns-via-dht-config": "0.0.1",
+    "express": "^4.11.2",
     "node-http-proxy": "0.0.3"
   }
 }
