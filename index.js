@@ -13,7 +13,6 @@ var HttpToDnsViaDHT = function(opts){
 
   var debug = require('debug')(pkg.name);
   var status = 'stopped';
-  var userSessions = {};
 
   opts.port = opts.port || 9090;
   opts.hostname = opts.hostname || '0.0.0.0';
@@ -30,7 +29,7 @@ var HttpToDnsViaDHT = function(opts){
   privateProxyApp.use(express.static(__dirname + '/public'));
   privateProxyApp.all('*', function(req, res){
     if( status !== 'started' ){
-      res.redirect('http://'+opts.httpHostname+':'+opts.httpPort+'/stopped.html');
+      res.redirect('http://127.0.0.1:'+opts.httpPort+'/stopped.html');
     } else if( status === 'started') {
       var hostname = req.hostname;
       var publicKey = configHolder.getPeerPublicKey(hostname);
@@ -50,30 +49,9 @@ var HttpToDnsViaDHT = function(opts){
   });
   var privateProxyServer = http.createServer(app);
 
-
-  var publicProxyApp = express();
-  publicProxyApp.all('*', function(req, res){
-    if( status === 'started') {
-      var hostname = req.hostname;
-      var nounce = req.get('x-nounce');
-      var config = configHolder.getConfig();
-      var localProxyTarget = config.httpProxy[hostname];
-      var userSession = userSessions[nounce];
-      if(localProxyTarget){
-        if(userSession && userSession.question === hostname && userSession.nounce === nounce){
-          // do more verification process ?
-          // proxy request to local server
-          // should update response to add x-identify and x-signature headers to response
-          proxy.web(req, res, config.httpProxy[hostname]);
-        }
-      }
-    }
-  });
-  var publicProxyServer = http.createServer(publicProxyApp);
-
   this.start = function(then){
     var that = this;
-    privateProxyServer.listen(opts.httpPort, function(){
+    privateProxyServer.listen(opts.httpPort, '127.0.0.1', function(){
       solver.start(function(){
         configHolder.watch(function(oldConfig, newConfig){
           if(status !=='started' ) return false;
@@ -114,19 +92,23 @@ var HttpToDnsViaDHT = function(opts){
         solver.announce(dns, announced[dns]);
       });
       status = 'started';
-      publicProxyServer.listen(opts.httpPort, then);
     }, function(addr, question, publicKey, nounce){
       if( status === 'started' ){
         debug('supply peer dns request %s', question)
         debug('publicKey %s', publicKey)
         debug('nounce %s', nounce)
         //- holypunch ?
-        userSessions[publicKey] = {
-          addr: ''+addr,
-          publicKey: publicKey,
-          nounce: nounce,
-          question: question
-        };
+        if( status === 'started') {
+          var config = configHolder.getConfig();
+          var localProxyTarget = config.httpProxy[question];
+          if(localProxyTarget){
+            // proxy request to local server
+            // should update response to add x-identify and x-signature headers to response
+            httpProxy.createServer({
+              target:config.httpProxy[question]
+            }).listen(opts.httpPort, '0.0.0.0');
+          }
+        }
       }
     });
   };
