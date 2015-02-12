@@ -16,12 +16,14 @@ program
   .option('-v, --verbose',
   'enable verbosity');
 
-program.command('listen')
+program.command('proxy')
 
   .option('--port <port>',
-  'port to listen')
+  'dht port to listen')
   .option('--hostname <hostname>',
-  'hostname to listen')
+  'dht hostname to listen')
+  .option('--http-port <httpPort>',
+  'http port to listen')
   .option('-d, --detach',
   'Detach process')
 
@@ -31,8 +33,7 @@ program.command('listen')
     var opts = {
       port: parseInt(command.port) || 9090,
       hostname: command.hostname || '0.0.0.0',
-      httpPort: parseInt(command.port) || 9091,
-      httpHostname: command.hostname || '0.0.0.0'
+      httpPort: parseInt(command.httpPort) || 9091
     };
 
     if (program.verbose) {
@@ -50,6 +51,60 @@ program.command('listen')
 
       var server = new HttpToDnsViaDHT(opts);
       server.start(function(){
+        console.log('Server ready');
+        console.log("server : %j", server.address());
+      });
+    };
+
+    if(command.detach) {
+      var cmdLine = [];
+      process.argv.forEach(function (val) {
+        if(!val.match(/^(-d|--detach)$/) ) cmdLine.push(val);
+      });
+      debug('%s', cmdLine)
+      var detachedProcess = spawn(cmdLine.shift(), cmdLine,
+        {detached: true, stdio:'inherit' });
+      detachedProcess.unref();
+    } else {
+      startProgram();
+    }
+  });
+
+program.command('serve')
+
+  .option('--port <port>',
+  'dht port to listen')
+  .option('--hostname <hostname>',
+  'dht hostname to listen')
+  .option('--http-port <httpPort>',
+  'http port to listen')
+  .option('-d, --detach',
+  'Detach process')
+
+  .description('Starts http server')
+  .action(function(port){
+    var command = arguments[arguments.length-1];
+    var opts = {
+      port: parseInt(command.port) || 9090,
+      hostname: command.hostname || '0.0.0.0',
+      httpPort: parseInt(command.port) || 9091
+    };
+
+    if (program.verbose) {
+      process.env['DEBUG'] = pkg.name;
+      process.env['DEBUG'] = '*';
+    }
+    var debug = require('debug')(pkg.name);
+
+
+    var startProgram = function(){
+
+      debug('%s', JSON.stringify(opts) );
+
+      console.log('Starting server');
+
+      var server = new HttpToDnsViaDHT(opts);
+      server.serve(function(){
         console.log('Server ready');
         console.log("server : %j", server.address());
       });
