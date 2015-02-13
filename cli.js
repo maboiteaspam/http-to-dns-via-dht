@@ -14,20 +14,19 @@ program
 
 program
   .option('-v, --verbose',
-  'enable verbosity');
-
-program.command('proxy')
-
+  'enable verbosity')
   .option('--port <port>',
   'dht port to listen')
   .option('--hostname <hostname>',
-  'dht hostname to listen')
+  'dht hostname to listen');
+
+program.command('browse')
   .option('--http-port <httpPort>',
   'http port to listen')
   .option('-d, --detach',
   'Detach process')
 
-  .description('Start server')
+  .description('Start an http proxy client to browse friendly hosted websites')
   .action(function(port){
     var command = arguments[arguments.length-1];
     var opts = {
@@ -70,18 +69,12 @@ program.command('proxy')
     }
   });
 
-program.command('serve')
+program.command('host')
 
-  .option('--port <port>',
-  'dht port to listen')
-  .option('--hostname <hostname>',
-  'dht hostname to listen')
-  .option('--http-port <httpPort>',
-  'http port to listen')
   .option('-d, --detach',
   'Detach process')
 
-  .description('Starts http server')
+  .description('Starts an http proxy server to friendly host websites')
   .action(function(port){
     var command = arguments[arguments.length-1];
     var opts = {
